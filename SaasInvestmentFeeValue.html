@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Investment Future Value & Fee Calculator</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f5f5f5;
+        }
+        .container {
+            width: 80%;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+        }
+        h1 {
+            font-size: 28px;
+            color: #007bff;
+        }
+        label {
+            display: block;
+            text-align: left;
+            font-weight: bold;
+            margin-top: 15px;
+        }
+        input[type="number"], input[type="text"], select {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 15px;
+        }
+        .investment {
+            display: flex;
+            align-items: center;
+            margin-top: 10px;
+        }
+        .investment input {
+            flex-grow: 1;
+            margin-right: 10px;
+        }
+        .remove-button {
+            background-color: #ff5733;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        #result {
+            font-size: 24px;
+            font-weight: bold;
+            margin-top: 20px;
+        }
+        #graph-container {
+            width: 80%;
+            margin: 20px auto;
+        }
+        table {
+            width: 100%;
+            margin-top: 20px;
+            border-collapse: collapse;
+        }
+        table, th, td {
+            border: 1px solid #ccc;
+        }
+        th, td {
+            padding: 10px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Investment Future Value & Fee Calculator</h1>
+
+        <label for="years">Number of Years:</label>
+        <input type="number" id="years" placeholder="Enter Number of Years" required>
+
+        <label for="growthRate">Expected Annual Growth (%):</label>
+        <input type="number" id="growthRate" placeholder="Enter Expected Annual Growth" required>
+
+        <button onclick="addInvestment()">Add Investment</button>
+
+        <div id="investmentInputs">
+            <!-- Investment input fields will be added dynamically here -->
+        </div>
+
+        <button onclick="calculateFutureValue()">Calculate</button>
+
+        <p id="result"></p>
+    </div>
+
+    <div id="graph-container">
+        <h2>Total Amount and Expense Fee by Year</h2>
+        <canvas id="barChart"></canvas>
+    </div>
+
+    <div class="container">
+        <h2>Total Amounts and Expense Fees by Year (Table)</h2>
+        <table id="resultTable">
+            <!-- Table rows will be added dynamically here -->
+        </table>
+    </div>
+
+    <script>
+        let investmentCount = 0;
+        let years = 0;
+
+        // Arrays to store investment data
+        const investmentNames = [];
+        const initialBalances = [];
+        const employeeContributions = [];
+        const employerContributions = [];
+        const expenseRatios = [];
+        const employeeContributionFrequencies = [];
+        const employerContributionFrequencies = [];
+        const investmentsData = [];
+
+        // Function to add an investment input field
+        function addInvestment() {
+            investmentCount++;
+            const investmentInputs = document.getElementById("investmentInputs");
+            const newInvestment = document.createElement("div");
+            newInvestment.classList.add("investment");
+            newInvestment.innerHTML = `
+                <input type="text" placeholder="Investment Name" required>
+                <input type="number" placeholder="Initial Balance" required>
+                <input type="number" placeholder="Employee Contribution" required>
+				<select class="employee-frequency" required>
+                    <option value="weekly">Weekly</option>
+                    <option value="bi-weekly">Bi-Weekly</option>
+                    <option value="bi-monthly">Bi-Monthly</option>
+                    <option value="monthly">Monthly</option>
+                    <option value="yearly">Yearly</option>
+                </select>
+                <input type="number" placeholder="Employer Contribution" required>
+                <select class="employer-frequency" required>
+                    <option value="weekly">Weekly</option>
+                    <option value="bi-weekly">Bi-Weekly</option>
+                    <option value="bi-monthly">Bi-Monthly</option>
+                    <option value="monthly">Monthly</option>
+                    <option value="yearly">Yearly</option>
+                </select>
+				<input type="number" placeholder="Expense Ratio (%)" required>
+                <button class="remove-button" onclick="removeInvestment(this)">Remove</button>
+            `;
+            investmentInputs.appendChild(newInvestment);
+        }
+
+        // Function to remove an investment input field
+        function removeInvestment(button) {
+            investmentCount--;
+            const investmentInputs = document.getElementById("investmentInputs");
+            investmentInputs.removeChild(button.parentElement);
+        }
+
+        // Function to calculate the future value
+        function calculateFutureValue() {
+            years = parseInt(document.getElementById("years").value);
+            const growthRate = parseFloat(document.getElementById("growthRate").value) / 100;
+
+            // Clear previous data
+            investmentNames.length = 0;
+            initialBalances.length = 0;
+            employeeContributions.length = 0;
+            employerContributions.length = 0;
+            expenseRatios.length = 0;
+            employeeContributionFrequencies.length = 0;
+            employerContributionFrequencies.length = 0;
+            investmentsData.length = 0;
+
+            const investmentInputs = document.querySelectorAll(".investment");
+
+            for (let i = 0; i < investmentInputs.length; i++) {
+                const investmentInput = investmentInputs[i].querySelectorAll("input, select");
+                const investmentName = investmentInput[0].value;
+                const initialBalance = parseFloat(investmentInput[1].value);
+                const employeeContribution = parseFloat(investmentInput[2].value);
+                const employerContribution = parseFloat(investmentInput[3].value);
+                const expenseRatio = parseFloat(investmentInput[4].value) / 100;
+                const employeeContributionFrequency = investmentInput[5].value;
+                const employerContributionFrequency = investmentInput[6].value;
+
+                investmentNames.push(investmentName);
+                initialBalances.push(initialBalance);
+                employeeContributions.push({ amount: employeeContribution, frequency: employeeContributionFrequency });
+                employerContributions.push({ amount: employerContribution, frequency: employerContributionFrequency });
+                expenseRatios.push(expenseRatio);
+
+                let startBalance = initialBalance;
+                let endBalance = startBalance;
+                const investmentData = [];
+
+                for (let year = 1; year <= years; year++) {
+                    const employeeContributionAmount = calculateContribution(employeeContribution, employeeContributionFrequency, year);
+                    const employerContributionAmount = calculateContribution(employerContribution, employerContributionFrequency, year);
+                    const interest = endBalance * growthRate;
+                    const expense = endBalance * expenseRatio;
+                    endBalance += employeeContributionAmount + employerContributionAmount + interest - expense;
+                    investmentData.push({ value: endBalance.toFixed(2), expenseFee: (expense).toFixed(2) });
+                    startBalance = endBalance;
+                }
+
+                investmentsData.push(investmentData);
+            }
+
+            document.getElementById("result").textContent = '';
+
+            // Update the bar chart
+            updateBarChart(years);
+
+            // Update the result table
+            updateResultTable(years);
+        }
+
+        // Function to calculate contributions based on frequency
+        function calculateContribution(amount, frequency, year) {
+            switch (frequency) {
+                case "weekly":
+                    return (amount * 52);
+                case "bi-weekly":
+                    return (amount * 26);
+                case "bi-monthly":
+                    return (amount * 24);
+                case "monthly":
+                    return (amount * 12);
+                case "yearly":
+                    return amount;
+                default:
+                    return amount;
+            }
+        }
+
+        // Function to update the bar chart
+        function updateBarChart(years) {
+            const labels = Array.from({ length: years }, (_, i) => `Year ${i + 1}`);
+            const datasets = [];
+
+            for (let i = 0; i < investmentCount; i++) {
+                const dataset = {
+                    label: investmentNames[i],
+                    data: investmentsData[i].map(item => item.value),
+                    backgroundColor: `rgba(${Math.floor(Math.random() * 256)}, ${Math.floor(Math.random() * 256)}, ${Math.floor(Math.random() * 256)}, 0.6)`,
+                    borderColor: `rgba(${Math.floor(Math.random() * 256)}, ${Math.floor(Math.random() * 256)}, ${Math.floor(Math.random() * 256)}, 1)`,
+                    borderWidth: 1,
+                    type: 'bar'
+                };
+
+                const expenseDataset = {
+                    label: `${investmentNames[i]} Expense Fee`,
+                    data: investmentsData[i].map(item => item.expenseFee),
+                    backgroundColor: `rgba(${Math.floor(Math.random() * 256)}, ${Math.floor(Math.random() * 256)}, ${Math.floor(Math.random() * 256)}, 0.6)`,
+                    borderColor: `rgba(${Math.floor(Math.random() * 256)}, ${Math.floor(Math.random() * 256)}, ${Math.floor(Math.random() * 256)}, 1)`,
+                    borderWidth: 1,
+                    type: 'line'
+                };
+
+                datasets.push(dataset);
+                datasets.push(expenseDataset);
+            }
+
+            const ctx = document.getElementById("barChart").getContext("2d");
+            if (window.myChart) {
+                window.myChart.destroy(); // Destroy previous chart to update
+            }
+            window.myChart = new Chart(ctx, {
+                type: "bar",
+                data: {
+                    labels: labels,
+                    datasets: datasets
+                },
+                options: {
+                    scales: {
+                        x: {
+                            stacked: true,
+                        },
+                        y: {
+                            stacked: true,
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top',
+                        },
+                        title: {
+                            display: true,
+                            text: 'Total Amount and Expense Fee by Year',
+                        },
+                    },
+                }
+            });
+        }
+
+        // Function to update the result table
+        function updateResultTable(years) {
+            const table = document.getElementById("resultTable");
+            table.innerHTML = "";
+
+            // Header row
+            const headerRow = document.createElement("tr");
+            headerRow.innerHTML = "<th>Year</th>" + investmentNames.map(name => `<th>${name} Value</th><th>${name} Expense Fee</th>`).join("");
+            table.appendChild(headerRow);
+
+            // Data rows
+            for (let i = 0; i < years; i++) {
+                const dataRow = document.createElement("tr");
+                const year = i + 1;
+                dataRow.innerHTML = `<td>Year ${year}</td>` + investmentsData.map(data => {
+                    const value = data[i].value;
+                    const expenseFee = data[i].expenseFee;
+                    return `<td>${value}</td><td>${expenseFee}</td>`;
+                }).join("");
+                table.appendChild(dataRow);
+            }
+        }
+    </script>
+</body>
+</html>
