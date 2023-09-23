@@ -141,6 +141,8 @@
                 <input type="text" placeholder="Investment Name" required>
                 <input type="number" placeholder="Initial Balance" required>
                 <input type="number" placeholder="Employee Contribution" required>
+				<input type="number" placeholder="Employer Contribution" required>
+				<input type="number" placeholder="Expense Ratio (%)" required>
 				<select class="employee-frequency" required>
                     <option value="weekly">Weekly</option>
                     <option value="bi-weekly">Bi-Weekly</option>
@@ -148,7 +150,6 @@
                     <option value="monthly">Monthly</option>
                     <option value="yearly">Yearly</option>
                 </select>
-                <input type="number" placeholder="Employer Contribution" required>
                 <select class="employer-frequency" required>
                     <option value="weekly">Weekly</option>
                     <option value="bi-weekly">Bi-Weekly</option>
@@ -156,7 +157,7 @@
                     <option value="monthly">Monthly</option>
                     <option value="yearly">Yearly</option>
                 </select>
-				<input type="number" placeholder="Expense Ratio (%)" required>
+
                 <button class="remove-button" onclick="removeInvestment(this)">Remove</button>
             `;
             investmentInputs.appendChild(newInvestment);
